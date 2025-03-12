@@ -1,5 +1,5 @@
-# Use a minimal Fedora image for a smaller footprint.
-FROM fedora:latest
+# Use the official NixOS base image.
+FROM nixos/nix
 
 # Define build-time arguments for user and group IDs.
 ARG SIAB_USERID=1000
@@ -33,22 +33,23 @@ ENV SIAB_PKGS=none
 ENV SIAB_SCRIPT=none
 # Specifies a URL to a script that should be executed before starting Shell in a Box.
 
-# Install necessary packages and create user/group.
-RUN dnf install -y openssh-clients sudo shellinabox && \
-    # Installs required packages, including sudo.
-    dnf clean -y all && \
-    # Cleans up the dnf cache to reduce image size.
-    rm -rf /var/cache/dnf && \
-    # Removes the dnf cache directory.
+# Install necessary packages using nix-env and create user/group.
+RUN nix-channel --add https://nixos.org/channels/nixos-unstable nixos && \
+    # Adds the unstable NixOS channel.
+    nix-channel --update nixos && \
+    # Updates the NixOS channel.
+    nix-env -iA $SIAB_PKGS && \
+    # Installs the packages specified in SIAB_PKGS using nix-env.
     groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
     # Creates a system group with the specified group ID.
     useradd -r -l ${SIAB_USER} -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \
     # Creates a system user with the specified user ID, home directory, and shell.
     usermod -aG wheel ${SIAB_USER} && \
-    # Adds the created user to the wheel group (sudo equivalent in fedora).
-    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/dnf" > /etc/sudoers.d/siab-dnf && \
-    # Creates a sudoers file to limit the user's sudo privileges to dnf commands.
-    chmod 0440 /etc/sudoers.d/siab-dnf
+    # Adds the created user to the wheel group (sudo equivalent in NixOS).
+    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/nix-env" > /etc/sudoers.d/siab-nix && \
+    # Creates a sudoers file to limit the user's sudo privileges to nix-env commands.
+    chmod 0440 /etc/sudoers.d/siab-nix \
+    # Sets the correct permissions for the sudoers file.
 
 # Expose the Shell in a Box port.
 EXPOSE 4200
