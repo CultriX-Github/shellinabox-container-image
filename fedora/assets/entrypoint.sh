@@ -48,7 +48,18 @@ for service in ${SIAB_SERVICE}; do
     # Adds each service specified in SIAB_SERVICE to the Shell in a Box command.
 done
 
-# Run a script if SIAB_SCRIPT is specified.
+# Function to download and execute a script if SIAB_SCRIPT is specified.
+#
+# Parameters:
+#   SIAB_SCRIPT: The URL of the script to be downloaded and executed.
+#
+# Return:
+#   None. If the script fails to download or execute, the function will exit with a non-zero status.
+#
+# Description:
+#   This function checks if SIAB_SCRIPT is not set to "none". If it is not, the function attempts to download the script
+#   from the specified URL using curl. If the download is successful, the script is made executable and then executed.
+#   If any step fails, an error message is printed and the function exits with a non-zero status.
 if [ "$SIAB_SCRIPT" != "none" ]; then
     if ! curl -s -k "$SIAB_SCRIPT" > /prep.sh; then
         echo "Error downloading script: $SIAB_SCRIPT"
@@ -65,6 +76,20 @@ fi
 echo "Starting container..."
 
 # Execute Shell in a Box or the provided command.
+#
+# Parameters:
+#   $1: The first argument passed to the script. If it is "shellinabox", the script will execute the Shell in a Box command.
+#       Otherwise, the script will execute the provided command.
+#   $*: All arguments passed to the script.
+#
+# Return:
+#   None. The script will exit with a non-zero status if an error occurs during execution.
+#
+# Description:
+#   This block of code checks if the first argument passed to the script is "shellinabox". If it is, the script will
+#   execute the Shell in a Box command stored in the COMMAND variable. If the first argument is not "shellinabox", the
+#   script will execute the provided command. If any error occurs during execution, an error message is printed and the
+#   script exits with a non-zero status.
 if [ "$1" = "shellinabox" ]; then
     echo "Executing: $COMMAND"
     exec "$COMMAND"

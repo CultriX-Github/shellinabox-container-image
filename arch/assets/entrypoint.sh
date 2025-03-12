@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+# Function to generate a random hexadecimal string of length 16.
+# This function is used to generate a secure password when SIAB_PASSWORD is set to "putsafepasswordhere".
 hex() {
     openssl rand -hex 8
 }
@@ -10,15 +12,19 @@ echo "Preparing container..."
 
 COMMAND="shellinaboxd --debug --no-beep --disable-peer-check -u ${SIAB_USER} -g ${SIAB_GROUP} -c /var/lib/shellinabox -p ${SIAB_PORT} --user-css ${SIAB_USERCSS}"
 
+# If SIAB_PKGS is not set to "openssh shellinabox sudo", update the system packages using pacman.
 if [ "$SIAB_PKGS" != "openssh shellinabox sudo" ]; then
     sudo pacman -Syu --noconfirm "$SIAB_PKGS"
     sudo pacman -Scc --noconfirm
 fi
 
+# If SIAB_SSL is not set to "true", disable SSL for the shellinabox service.
 if [ "$SIAB_SSL" != "true" ]; then
     COMMAND+=" -t"
 fi
 
+# If SIAB_ADDUSER is set to "true", add a new user to the container.
+# If SIAB_PASSWORD is set to "putsafepasswordhere", generate a secure password and display it.
 if [ "${SIAB_ADDUSER}" == "true" ]; then
     if [ "${SIAB_PASSWORD}" == "putsafepasswordhere" ]; then
         SIAB_PASSWORD=$(hex)
@@ -28,10 +34,12 @@ if [ "${SIAB_ADDUSER}" == "true" ]; then
     unset SIAB_PASSWORD
 fi
 
+# Add additional services specified in SIAB_SERVICE to the shellinabox command.
 for service in ${SIAB_SERVICE}; do
     COMMAND+=" -s ${service}"
 done
 
+# If SIAB_SCRIPT is not set to "none", download the script from the specified URL and execute it.
 if [ "$SIAB_SCRIPT" != "none" ]; then
     if ! curl -s -k "$SIAB_SCRIPT" > /prep.sh; then
         echo "Error downloading script: $SIAB_SCRIPT"
@@ -47,6 +55,8 @@ fi
 
 echo "Starting container..."
 
+# If the first argument is "shellinabox", execute the shellinabox command.
+# Otherwise, execute the specified command.
 if [ "$1" = "shellinabox" ]; then
     echo "Executing: $COMMAND"
     exec "$COMMAND"
