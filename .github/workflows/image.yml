@@ -18,6 +18,8 @@ jobs:
           - ubuntu
           - centos
           - fedora
+          - arch
+          - nixos
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
