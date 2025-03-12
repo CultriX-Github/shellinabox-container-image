@@ -16,15 +16,15 @@ ENV SIAB_HOME=/home/guest
 ENV SIAB_SUDO=false
 ENV SIAB_SSL=true
 ENV SIAB_SERVICE=/:LOGIN
-# Default SIAB_PKGS is empty (instead of "none") to prevent issues.
 ENV SIAB_PKGS=""
 ENV SIAB_SCRIPT=""
 
-# Install necessary packages using nix-shell (temporary environment).
+# Ensure Nix is initialized and install necessary packages.
 RUN set -ex && \
     nix-channel --add https://nixos.org/channels/nixos-unstable nixos && \
     nix-channel --update && \
-    nix-shell -p shellinabox curl sudo --run "echo 'Packages installed inside nix-shell'"
+    nix-store --verify --repair && \
+    nix profile install nixpkgs#shellinabox nixpkgs#curl nixpkgs#sudo
 
 # Create user and group safely for NixOS.
 RUN set -ex && \
@@ -48,7 +48,7 @@ RUN set -ex && \
         usermod -aG wheel "${SIAB_USER}"; \
     fi && \
     # Create sudoers entry safely
-    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/nix-shell" > /etc/sudoers.d/siab-nix && \
+    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/nix-env" > /etc/sudoers.d/siab-nix && \
     chmod 0440 /etc/sudoers.d/siab-nix
 
 # Expose the Shell in a Box port dynamically.
