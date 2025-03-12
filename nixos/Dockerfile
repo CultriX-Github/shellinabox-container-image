@@ -11,32 +11,44 @@ ENV SIAB_PORT=4200
 ENV SIAB_ADDUSER=true
 ENV SIAB_USER=guest
 ENV SIAB_GROUP=guest
-ENV SIAB_PASSWORD=putsafepasswordhere
 ENV SIAB_SHELL=/bin/bash
 ENV SIAB_HOME=/home/guest
 ENV SIAB_SUDO=false
 ENV SIAB_SSL=true
 ENV SIAB_SERVICE=/:LOGIN
-# Make SIAB_PKGS default to an empty string instead of "none"
+# Default SIAB_PKGS is empty (instead of "none") to prevent issues.
 ENV SIAB_PKGS=""
 ENV SIAB_SCRIPT=""
 
-# Install necessary packages and create user/group.
+# Install necessary packages using nix-shell (temporary environment).
 RUN set -ex && \
-    # Add and update the NixOS channel.
     nix-channel --add https://nixos.org/channels/nixos-unstable nixos && \
-    nix-channel --update nixos && \
-    # Install required packages.
-    nix-env -iA nixpkgs.shellinabox nixpkgs.curl nixpkgs.sudo && \
-    # Install additional user-defined packages if provided.
-    [ -n "$SIAB_PKGS" ] && nix-env -iA $SIAB_PKGS || true && \
-    # Create group and user.
-    groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
-    useradd -r -l ${SIAB_USER} -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} && \
-    # Add user to wheel (sudoers equivalent in NixOS).
-    usermod -aG wheel ${SIAB_USER} && \
-    # Grant passwordless sudo access to nix-env commands.
-    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/nix-env" > /etc/sudoers.d/siab-nix && \
+    nix-channel --update && \
+    nix-shell -p shellinabox curl sudo --run "echo 'Packages installed inside nix-shell'"
+
+# Create user and group safely for NixOS.
+RUN set -ex && \
+    # Ensure /etc/sudoers.d exists
+    mkdir -p /etc/sudoers.d && \
+    chmod 0755 /etc/sudoers.d && \
+    # Ensure the group exists and has a valid ID
+    if ! getent group "${SIAB_GROUP}" >/dev/null 2>&1; then \
+        groupadd -r -g "${SIAB_GROUPID}" "${SIAB_GROUP}"; \
+    fi && \
+    # Ensure the user does not already exist before creating
+    if ! id -u "${SIAB_USER}" >/dev/null 2>&1; then \
+        useradd -r -u "${SIAB_USERID}" -m -g "${SIAB_GROUP}" -s "${SIAB_SHELL}" -d "${SIAB_HOME}" "${SIAB_USER}"; \
+    fi && \
+    # Ensure the wheel group exists before adding the user (sudo equivalent in NixOS)
+    if ! getent group wheel >/dev/null 2>&1; then \
+        groupadd wheel; \
+    fi && \
+    # Check if the user exists before modifying sudo permissions
+    if id -u "${SIAB_USER}" >/dev/null 2>&1; then \
+        usermod -aG wheel "${SIAB_USER}"; \
+    fi && \
+    # Create sudoers entry safely
+    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/nix-shell" > /etc/sudoers.d/siab-nix && \
     chmod 0440 /etc/sudoers.d/siab-nix
 
 # Expose the Shell in a Box port dynamically.
