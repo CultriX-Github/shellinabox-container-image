@@ -11,13 +11,11 @@ ENV SIAB_PORT=4200
 ENV SIAB_ADDUSER=true
 ENV SIAB_USER=guest
 ENV SIAB_GROUP=guest
-ENV SIAB_PASSWORD=putsafepasswordhere
 ENV SIAB_SHELL=/bin/bash
 ENV SIAB_HOME=/home/guest
 ENV SIAB_SUDO=false
 ENV SIAB_SSL=true
 ENV SIAB_SERVICE=/:LOGIN
-# Default SIAB_PKGS is empty (instead of "none") to prevent issues.
 ENV SIAB_PKGS=""
 ENV SIAB_SCRIPT=""
 
@@ -29,23 +27,24 @@ RUN set -ex && \
         sudo \
         shellinabox \
         curl && \
-    # Install additional packages if provided.
     [ -n "$SIAB_PKGS" ] && apt-get install -y --no-install-recommends $SIAB_PKGS || true && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Create user and group.
+# Create user and group safely.
 RUN set -ex && \
     # Ensure /etc/sudoers.d exists
     mkdir -p /etc/sudoers.d && \
     chmod 0755 /etc/sudoers.d && \
-    # Ensure group exists
+    # Ensure the group exists
     getent group ${SIAB_GROUP} || groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
-    # Ensure user does not already exist
+    # Ensure the user does not already exist
     id -u ${SIAB_USER} &>/dev/null || useradd -r -l -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \
-    # Ensure the sudo group exists before adding the user
+    # Ensure the sudo group exists
     getent group sudo || groupadd sudo && \
+    # Add user to the sudo group
     usermod -aG sudo ${SIAB_USER} && \
+    # Create sudoers entry safely
     echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \
     chmod 0440 /etc/sudoers.d/siab-apt
 
