@@ -47,7 +47,7 @@ RUN set -ex && \
     # Check if the user exists before modifying sudo permissions
     if id -u "${SIAB_USER}" >/dev/null 2>&1; then usermod -aG sudo "${SIAB_USER}"; fi && \
     # Create sudoers entry safely
-    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \
+    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/pacman" > /etc/sudoers.d/siab-pacman && \
     chmod 0440 /etc/sudoers.d/siab-pacman
 
 # Expose the Shell in a Box port dynamically.
