@@ -35,28 +35,34 @@ ENV SIAB_SCRIPT=none
 # Specifies a URL to a script that should be executed before starting Shell in a Box.                                                                           
                                                                                
 # Update package lists, install necessary packages, and create user/group.     
-RUN apt-get update && apt-get install -y --no-install-recommends openssl curl openssh-client shellinabox sudo && \                                           
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openssl \
+    curl \
+    openssh-client \
+    shellinabox \
+    sudo && \
     # Updates package lists and installs required packages, including sudo.    
     # --no-install-recommends reduces image size.                                    
-    apt-get clean && \                                                         
+    DEBIAN_FRONTEND=noninteractive apt-get clean -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get autoremove -y && \                                                         
     # Cleans up the apt cache to reduce image size.                            
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \                     
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*                    
     # Removes temporary files to further reduce image size.                    
-    groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \                          
-    # Creates a system group with the specified group ID.                      
-    useradd -r -l ${SIAB_USER} -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \                                
-    # Creates a system user with the specified user ID, home directory, and shell.                                                                         
-    usermod -aG sudo ${SIAB_USER} && \                                         
-    # Adds the created user to the sudo group.                                 
-    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \                             
-    # Creates a sudoers file to limit the user's sudo privileges to apt-related commands.                                                                      
-    chmod 0440 /etc/sudoers.d/siab-apt && \                                    
-    # Sets the correct permissions for the sudoers file.                       
-    ln -sf '/etc/shellinabox/options-enabled/00+Black on White.css' /etc/shellinabox/options-enabled/00+Black-on-White.css && \                    
-    # Creates symbolic links for CSS files to ensure correct file paths.       
-    ln -sf '/etc/shellinabox/options-enabled/00_White On Black.css' /etc/shellinabox/options-enabled/00_White-On-Black.css && \                    
-    # Creates symbolic links for CSS files to ensure correct file paths.       
-    ln -sf '/etc/shellinabox/options-enabled/01+Color Terminal.css' /etc/shellinabox/options-enabled/01+Color-Terminal.css                         
+RUN groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
+    # Creates a system group with the specified group ID.
+    useradd -r -l ${SIAB_USER} -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \
+    # Creates a system user with the specified user ID, home directory, and shell.
+    usermod -aG sudo ${SIAB_USER} && \
+    # Adds the created user to the sudo group.
+    echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \
+    # Creates a sudoers file to limit the user's sudo privileges to apt-related commands.
+    chmod 0440 /etc/sudoers.d/siab-apt && \
+    # Sets the correct permissions for the sudoers file.
+    ln -sf '/etc/shellinabox/options-enabled/00+Black on White.css' /etc/shellinabox/options-enabled/00+Black-on-White.css && \
+    # Creates symbolic links for CSS files to ensure correct file paths.
+    ln -sf '/etc/shellinabox/options-enabled/00_White On Black.css' /etc/shellinabox/options-enabled/00_White-On-Black.css && \
+    # Creates symbolic links for CSS files to ensure correct file paths.
+    ln -sf '/etc/shellinabox/options-enabled/01+Color Terminal.css' /etc/shellinabox/options-enabled/01+Color-Terminal.css
                                                                                
 # Expose the Shell in a Box port.                                              
 EXPOSE 4200                                                                    
