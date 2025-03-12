@@ -1,5 +1,5 @@
-# Use a slim Ubuntu image for a smaller footprint, reducing the final image size.
-FROM ubuntu:jammy-slim
+# Use a slim Debian image for a smaller footprint, reducing the final image size.
+FROM debian:bookworm-slim
 
 # Define build-time arguments for user and group IDs. These can be overridden during the build.
 ARG SIAB_USERID=1000
