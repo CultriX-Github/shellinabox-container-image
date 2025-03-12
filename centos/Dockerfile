@@ -42,7 +42,10 @@ RUN set -ex && \
 
 # Create user and group.
 RUN set -ex && \
-    groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
+    # Ensure /etc/sudoers.d exists
+    mkdir -p /etc/sudoers.d && \
+    chmod 0755 /etc/sudoers.d && \
+    getent group ${SIAB_GROUP} || groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
     useradd -r -l ${SIAB_USER} -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} && \
     usermod -aG wheel ${SIAB_USER} && \
     echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/yum" > /etc/sudoers.d/siab-yum && \
