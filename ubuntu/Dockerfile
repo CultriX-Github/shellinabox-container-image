@@ -1,89 +1,68 @@
-                                                                               
-# Use a slim Debian image for a smaller footprint, reducing the final image size.                                                                          
-FROM debian:bookworm-slim                                                      
-                                                                               
-# Define build-time arguments for user and group IDs. These can be overridden during the build.                                                              
-ARG SIAB_USERID=1000                                                           
-ARG SIAB_GROUPID=1000                                                          
-                                                                               
-# Set environment variables for Shell in a Box configuration.                  
-ENV SIAB_USERCSS="Normal:+/etc/shellinabox/options-enabled/00+Black-on-White.css,Rerse:-/etc/shellinabox/options-enabled/00_White-On-Black.css;Colors:+/etc/shelnabox/options-enabled/01+Color-Terminal.css,Monochrome:-/etc/shellinabox/optio-enabled/01_Monochrome.css"                                                    
-# Defines the default CSS styles for the Shell in a Box interface.             
-ENV SIAB_PORT=4200                                                             
-# Sets the port on which Shell in a Box will listen for connections.           
-ENV SIAB_ADDUSER=true                                                          
-# Determines whether a new user should be created within the container.        
-ENV SIAB_USER=guest                                                            
-# Specifies the username for the user to be created.                           
-ENV SIAB_GROUP=guest                                                           
-# Specifies the group name for the group to be created.                        
-ENV SIAB_PASSWORD=putsafepasswordhere                                          
-# Sets the password for the created user. If left as default, a random password will be generated.                                                             
-ENV SIAB_SHELL=/bin/bash                                                       
-# Sets the default shell for the created user.                                 
-ENV SIAB_HOME=/home/guest                                                      
-# Sets the home directory for the created user.                                
-ENV SIAB_SUDO=false                                                            
-# Determines whether the created user should be given sudo privileges. (Now limited to apt)                                                                
-ENV SIAB_SSL=true                                                              
-# Determines whether Shell in a Box should use SSL.                            
-ENV SIAB_SERVICE=/:LOGIN                                                       
-# Specifies the services to be exposed through Shell in a Box.                 
-ENV SIAB_PKGS=none                                                             
-# Specifies additional packages to be installed before starting Shell in a Box 
-ENV SIAB_SCRIPT=none                                                           
-# Specifies a URL to a script that should be executed before starting Shell in a Box.                                                                           
-                                                                               
-# Update package lists, install necessary packages, and create user/group.     
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openssl \
-    curl \
-    openssh-client \
-    shellinabox \
-    sudo && \
-    # Updates package lists and installs required packages, including sudo.    
-    # --no-install-recommends reduces image size.                                    
-    DEBIAN_FRONTEND=noninteractive apt-get clean -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get autoremove -y && \                                                         
-    # Cleans up the apt cache to reduce image size.                            
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*                    
-    # Removes temporary files to further reduce image size.                    
-RUN groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
-    # Creates a system group with the specified group ID.
+# Use a slim Debian image for a smaller footprint.
+FROM debian:bookworm-slim
+
+# Define build-time arguments for user and group IDs.
+ARG SIAB_USERID=1000
+ARG SIAB_GROUPID=1000
+
+# Set environment variables for Shell in a Box configuration.
+ENV SIAB_USERCSS="Normal:+/etc/shellinabox/options-enabled/00+Black-on-White.css,Reverse:-/etc/shellinabox/options-enabled/00_White-On-Black.css;Colors:+/etc/shellinabox/options-enabled/01+Color-Terminal.css,Monochrome:-/etc/shellinabox/options-enabled/01_Monochrome.css"
+ENV SIAB_PORT=4200
+ENV SIAB_ADDUSER=true
+ENV SIAB_USER=guest
+ENV SIAB_GROUP=guest
+ENV SIAB_PASSWORD=putsafepasswordhere
+ENV SIAB_SHELL=/bin/bash
+ENV SIAB_HOME=/home/guest
+ENV SIAB_SUDO=false
+ENV SIAB_SSL=true
+ENV SIAB_SERVICE=/:LOGIN
+# Make SIAB_PKGS default to an empty string instead of "none"
+ENV SIAB_PKGS=""
+ENV SIAB_SCRIPT=""
+
+# Install necessary packages and clean up.
+RUN set -ex && \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        openssl \
+        openssh-client \
+        shellinabox \
+        sudo \
+        ${SIAB_PKGS} && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Create user and group.
+RUN set -ex && \
+    groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
     useradd -r -l ${SIAB_USER} -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \
-    # Creates a system user with the specified user ID, home directory, and shell.
     usermod -aG sudo ${SIAB_USER} && \
-    # Adds the created user to the sudo group.
     echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \
-    # Creates a sudoers file to limit the user's sudo privileges to apt-related commands.
-    chmod 0440 /etc/sudoers.d/siab-apt && \
-    # Sets the correct permissions for the sudoers file.
-    ln -sf '/etc/shellinabox/options-enabled/00+Black on White.css' /etc/shellinabox/options-enabled/00+Black-on-White.css && \
-    # Creates symbolic links for CSS files to ensure correct file paths.
-    ln -sf '/etc/shellinabox/options-enabled/00_White On Black.css' /etc/shellinabox/options-enabled/00_White-On-Black.css && \
-    # Creates symbolic links for CSS files to ensure correct file paths.
-    ln -sf '/etc/shellinabox/options-enabled/01+Color Terminal.css' /etc/shellinabox/options-enabled/01+Color-Terminal.css
-                                                                               
-# Expose the Shell in a Box port.                                              
-EXPOSE 4200                                                                    
-                                                                               
-# Define volumes for persistent data.                                          
-VOLUME /etc/shellinabox /var/log/supervisor /home                              
-                                                                               
-# Copy the entrypoint script to the container.                                 
-COPY assets/entrypoint.sh /usr/local/sbin/                                     
-                                                                               
-# Set the working directory.                                                   
-WORKDIR /home/${SIAB_USER}                                                     
-                                                                               
-# Switch to the non-root user.                                                 
-USER ${SIAB_USER}                                                              
-                                                                               
-# Set the entrypoint and default command for the container.                    
-ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]                                   
-CMD ["shellinabox"]                                                            
-                                                                               
-# Add a health check to ensure Shell in a Box is running.                      
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \        
-    CMD curl -f http://localhost:4200 || exit 1                                
-                                                                               
+    chmod 0440 /etc/sudoers.d/siab-apt
+
+# Expose the Shell in a Box port.
+EXPOSE ${SIAB_PORT}
+
+# Define volumes for persistent data.
+VOLUME /etc/shellinabox /var/log/supervisor /home
+
+# Copy the entrypoint script and ensure it is executable.
+COPY assets/entrypoint.sh /usr/local/sbin/entrypoint.sh
+RUN chmod +x /usr/local/sbin/entrypoint.sh
+
+# Set working directory.
+WORKDIR ${SIAB_HOME}
+
+# Switch to the created user.
+USER ${SIAB_USER}
+
+# Set the entrypoint and default command.
+ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]
+CMD ["shellinabox"]
+
+# Add a health check for Shell in a Box.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${SIAB_PORT} || exit 1
