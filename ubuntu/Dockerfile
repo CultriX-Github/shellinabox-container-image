@@ -37,12 +37,13 @@ RUN set -ex && \
     mkdir -p /etc/sudoers.d && \
     chmod 0755 /etc/sudoers.d && \
     # Ensure the group exists
-    getent group ${SIAB_GROUP} || groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
+    if ! getent group ${SIAB_GROUP}; then groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP}; fi && \
     # Ensure the user does not already exist
-    id -u ${SIAB_USER} &>/dev/null || useradd -r -l -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \
-    # Ensure the sudo group exists
-    getent group sudo || groupadd sudo && \
-    # Add user to the sudo group
+    if ! id -u ${SIAB_USER} >/dev/null 2>&1; then \
+        useradd -r -l -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER}; \
+    fi && \
+    # Ensure the sudo group exists before adding the user
+    if ! getent group sudo; then groupadd sudo; fi && \
     usermod -aG sudo ${SIAB_USER} && \
     # Create sudoers entry safely
     echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \
