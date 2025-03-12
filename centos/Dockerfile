@@ -1,5 +1,5 @@
-# Use a minimal CentOS 7 image for a smaller footprint.
-FROM centos:7
+# Use a minimal CentOS image for a smaller footprint.
+FROM centos:latest
 
 # Define build-time arguments for user and group IDs.
 ARG SIAB_USERID=1000
