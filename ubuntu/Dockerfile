@@ -36,15 +36,16 @@ RUN set -ex && \
     # Ensure /etc/sudoers.d exists
     mkdir -p /etc/sudoers.d && \
     chmod 0755 /etc/sudoers.d && \
-    # Ensure the group exists
-    if ! getent group ${SIAB_GROUP}; then groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP}; fi && \
-    # Ensure the user does not already exist
-    if ! id -u ${SIAB_USER} >/dev/null 2>&1; then \
-        useradd -r -l -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER}; \
+    # Ensure the group exists and has a valid ID
+    if ! getent group "${SIAB_GROUP}" >/dev/null 2>&1; then groupadd -r -g "${SIAB_GROUPID}" "${SIAB_GROUP}"; fi && \
+    # Ensure the user does not already exist before creating
+    if ! id -u "${SIAB_USER}" >/dev/null 2>&1; then \
+        useradd -r -l -u "${SIAB_USERID}" -m -g "${SIAB_GROUP}" -s "${SIAB_SHELL}" -d "${SIAB_HOME}" "${SIAB_USER}"; \
     fi && \
     # Ensure the sudo group exists before adding the user
-    if ! getent group sudo; then groupadd sudo; fi && \
-    usermod -aG sudo ${SIAB_USER} && \
+    if ! getent group sudo >/dev/null 2>&1; then groupadd sudo; fi && \
+    # Check if the user exists before modifying sudo permissions
+    if id -u "${SIAB_USER}" >/dev/null 2>&1; then usermod -aG sudo "${SIAB_USER}"; fi && \
     # Create sudoers entry safely
     echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \
     chmod 0440 /etc/sudoers.d/siab-apt
