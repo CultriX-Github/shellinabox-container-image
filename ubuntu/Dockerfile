@@ -1,5 +1,5 @@
-# Use a slim Debian image for a smaller footprint.
-FROM debian:bookworm-slim
+# Use the latest Ubuntu image.
+FROM ubuntu:latest
 
 # Define build-time arguments for user and group IDs.
 ARG SIAB_USERID=1000
@@ -17,7 +17,7 @@ ENV SIAB_HOME=/home/guest
 ENV SIAB_SUDO=false
 ENV SIAB_SSL=true
 ENV SIAB_SERVICE=/:LOGIN
-# Make SIAB_PKGS default to an empty string instead of "none"
+# Default SIAB_PKGS is empty (instead of "none") to prevent issues.
 ENV SIAB_PKGS=""
 ENV SIAB_SCRIPT=""
 
@@ -26,28 +26,28 @@ RUN set -ex && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        curl \
-        openssl \
-        openssh-client \
-        shellinabox \
         sudo \
-        ${SIAB_PKGS} && \
+        shellinabox \
+        curl && \
+    # Install additional packages if provided.
+    [ -n "$SIAB_PKGS" ] && apt-get install -y --no-install-recommends $SIAB_PKGS || true && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Create user and group.
 RUN set -ex && \
-    groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
-    useradd -r -l ${SIAB_USER} -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \
+    # Ensure group exists
+    getent group ${SIAB_GROUP} || groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
+    # Ensure user does not already exist
+    id -u ${SIAB_USER} &>/dev/null || useradd -r -l -u ${SIAB_USERID} -m -g ${SIAB_GROUP} -s ${SIAB_SHELL} -d ${SIAB_HOME} ${SIAB_USER} && \
+    # Ensure the sudo group exists before adding the user
+    getent group sudo || groupadd sudo && \
     usermod -aG sudo ${SIAB_USER} && \
     echo "${SIAB_USER} ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/apt-cache" > /etc/sudoers.d/siab-apt && \
     chmod 0440 /etc/sudoers.d/siab-apt
 
-# Expose the Shell in a Box port.
+# Expose the Shell in a Box port dynamically.
 EXPOSE ${SIAB_PORT}
-
-# Define volumes for persistent data.
-VOLUME /etc/shellinabox /var/log/supervisor /home
 
 # Copy the entrypoint script and ensure it is executable.
 COPY assets/entrypoint.sh /usr/local/sbin/entrypoint.sh

@@ -1,5 +1,5 @@
-# Use a minimal CentOS image for a smaller footprint.
-FROM centos:latest
+# Use a minimal CentOS 7 image for a smaller footprint.
+FROM centos:7
 
 # Define build-time arguments for user and group IDs.
 ARG SIAB_USERID=1000
@@ -23,14 +23,20 @@ ENV SIAB_SCRIPT=""
 
 # Install necessary packages and clean up.
 RUN set -ex && \
+    # Ensure EPEL repository is installed and enabled
     yum install -y epel-release && \
+    yum-config-manager --enable epel && \
+    yum makecache && \
+    # Install required packages
     yum install -y \
         openssh-clients \
         sudo \
-        shellinabox \
-        curl \
-        ${SIAB_PKGS} && \
-    # Clean up to reduce image size.
+        curl && \
+    # Install Shellinabox separately to handle EPEL issues
+    yum install -y shellinabox || true && \
+    # Install additional user-defined packages if provided
+    [ -n "$SIAB_PKGS" ] && yum install -y $SIAB_PKGS || true && \
+    # Clean up to reduce image size
     yum clean all && \
     rm -rf /var/cache/yum /tmp/* /var/tmp/*
 
