@@ -1,5 +1,5 @@
 # Use the latest Arch Linux image.
-FROM archlinux:latest
+FROM archlinux/archlinux:latest
 
 # Define build-time arguments for user and group IDs.
 ARG SIAB_USERID=1000
