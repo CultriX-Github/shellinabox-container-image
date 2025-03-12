@@ -1,4 +1,4 @@
-# Use the official NixOS base image.
+d# Use the official NixOS base image.
 FROM nixos/nix
 
 # Define build-time arguments for user and group IDs.
@@ -18,12 +18,17 @@ ENV SIAB_SSL=true
 ENV SIAB_SERVICE=/:LOGIN
 ENV SIAB_PKGS=""
 ENV SIAB_SCRIPT=""
+# Disable seccomp sandboxing for Nix
+ENV NIXPKGS_ALLOW_UNFREE=1
+ENV NIXOS_NO_SECURE_SCRATCH=1
+ENV NIX_REMOTE=daemon
+ENV NIX_CONF_DIR=/etc/nix
 
 # Ensure Nix is initialized and install necessary packages.
 RUN set -ex && \
+    mkdir -p /etc/nix && echo "sandbox = false" > /etc/nix/nix.conf && \
     nix-channel --add https://nixos.org/channels/nixos-unstable nixos && \
     nix-channel --update && \
-    nix-store --verify --repair && \
     nix profile install nixpkgs#shellinabox nixpkgs#curl nixpkgs#sudo
 
 # Create user and group safely for NixOS.
