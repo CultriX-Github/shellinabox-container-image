@@ -36,6 +36,9 @@ RUN set -ex && \
 
 # Create user and group.
 RUN set -ex && \
+    # Ensure /etc/sudoers.d exists
+    mkdir -p /etc/sudoers.d && \
+    chmod 0755 /etc/sudoers.d && \
     # Ensure group exists
     getent group ${SIAB_GROUP} || groupadd -r -g ${SIAB_GROUPID} ${SIAB_GROUP} && \
     # Ensure user does not already exist
