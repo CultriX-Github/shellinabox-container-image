@@ -50,17 +50,18 @@ Current Version: **2.20** (or whatever the latest version is)
 
 Pull the latest image from Docker Hub:
 
-    docker pull sspreitzer/shellinabox:latest
+    docker pull cultrix/shellinabox:debian
 
 To pull a specific version, use the tag:
 
-    docker pull sspreitzer/shellinabox:2.20
+    docker pull cultrix/shellinabox:debian
 
 ### Run the Image
 
 To run the image, use the `docker run` command. You can customize the container using environment variables.
 
-    docker run -p 4200:4200 -e SIAB_PASSWORD=mysecretpassword -e SIAB_SUDO=true sspreitzer/shellinabox:latest
+    docker run -p 4200:4200 -e SIAB_PASSWORD=mysecretpassword -e SIAB_SUDO=true cultrix/shellinabox:debian
+
 
 This example maps port 4200 on the host to port 4200 in the container, sets the user's password to "mysecretpassword", and enables `sudo` access.
 
@@ -68,19 +69,20 @@ This example maps port 4200 on the host to port 4200 in the container, sets the 
 
 **Basic Usage:**
 
-    docker run -p 4200:4200 sspreitzer/shellinabox:latest
+    docker run -p 4200:4200 cultrix/shellinabox:debian
+
 
 This will start the container with the default settings. You can then access Shell in a Box by navigating to `http://<your_docker_host>:4200` in your web browser.
 
 **Running a Custom Script:**
 
-    docker run -p 4200:4200 -e SIAB_SCRIPT=https://example.com/myscript.sh sspreitzer/shellinabox:latest
+    docker run -p 4200:4200 -e SIAB_SCRIPT=https://example.com/myscript.sh cultrix/shellinabox:debian
 
 This will download and execute the script located at `https://example.com/myscript.sh` before starting Shell in a Box.
 
 **Installing Additional Packages:**
 
-    docker run -p 4200:4200 -e SIAB_PKGS="htop vim" sspreitzer/shellinabox:latest
+    docker run -p 4200:4200 -e SIAB_PKGS="htop vim" cultrix/shellinabox:debian
 
 This will install the `htop` and `vim` packages before starting Shell in a Box.
 
