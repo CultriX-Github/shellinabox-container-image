@@ -2,6 +2,9 @@
 
 A Dockerfile to build a secure and configurable Shell in a Box container image. This image provides web-based terminal access to a Linux environment.
 
+[![Build and Push the shellinabox Container Images](https://github.com/CultriX-Github/shellinabox-container-image/actions/workflows/image.yml/badge.svg)](https://github.com/CultriX-Github/shellinabox-container-image/actions/workflows/image.yml)
+
+
 ## Table of Contents
 
 - [Introduction](#introduction)
