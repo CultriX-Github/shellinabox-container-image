@@ -1,5 +1,5 @@
 # Use the latest Ubuntu image.
-FROM debian-bookworm:slim
+FROM debian:bookworm-slim
 
 # Define build-time arguments for user and group IDs.
 ARG SIAB_USERID=1000
