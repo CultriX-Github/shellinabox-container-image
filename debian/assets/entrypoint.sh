@@ -1,24 +1,24 @@
 #!/bin/bash
 
-set -e  # Exit immediately if a command exits with a non-zero status
+set -e  # Exit immediately on error
 
 # Define the default command
 COMMAND="shellinabox"
 
-# Check if a script URL is provided.
+# Check if a startup script is provided and not set to "none"
 if [ -n "$SIAB_SCRIPT" ] && [ "$SIAB_SCRIPT" != "none" ]; then
     echo "Downloading startup script from: $SIAB_SCRIPT"
 
-    # Download the script using curl (follow redirects, ignore SSL issues if needed).
+    # Download the script using curl with proper options
     if ! curl -s -L -k "$SIAB_SCRIPT" -o /prep.sh; then
         echo "Error: Failed to download script from $SIAB_SCRIPT"
         exit 1
     fi
 
-    # Make the downloaded script executable.
+    # Ensure the script is executable
     chmod +x /prep.sh
 
-    # Execute the downloaded script and handle errors.
+    # Execute the script
     echo "Executing startup script: $SIAB_SCRIPT..."
     if ! /prep.sh; then
         echo "Error: Failed to execute startup script."

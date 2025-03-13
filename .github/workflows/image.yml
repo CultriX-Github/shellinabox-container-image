@@ -2,10 +2,10 @@ name: Build and Push the shellinabox Container Images
 on:
   push:
     branches:
-      - main
+    - main
   workflow_dispatch: {}
   schedule:
-    - cron: '00 03 * * 0'
+  - cron: '00 03 * * 0'
 
 jobs:
   image:
@@ -14,30 +14,30 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu
-          - centos
-          - fedora
-          - arch
-          - nixos
+        - ubuntu
+        - centos
+        - fedora
+        - arch
+        - debian
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Setup Builder
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and Push Container Image
-        uses: docker/build-push-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: ./${{ matrix.os }}/
-          pull: true
-          push: true
-          tags: |
-            docker.io/cultrix/shellinabox:${{ matrix.os }}
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+    - name: Setup QEMU
+      uses: docker/setup-qemu-action@v2
+    - name: Setup Builder
+      uses: docker/setup-buildx-action@v2
+    - name: Login to Docker Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: docker.io
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build and Push Container Image
+      uses: docker/build-push-action@v3
+      with:
+        platforms: linux/amd64,linux/arm64
+        context: ./${{ matrix.os }}/
+        pull: true
+        push: true
+        tags: |
+          docker.io/cultrix/shellinabox:${{ matrix.os }}
