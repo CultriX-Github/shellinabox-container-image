@@ -66,7 +66,7 @@ USER ${SIAB_USER}
 
 # Set the entrypoint and default command.
 ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]
-CMD ["shellinabox"]
+CMD []
 
 # Add a health check for Shell in a Box.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
