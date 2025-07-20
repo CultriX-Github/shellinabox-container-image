@@ -60,8 +60,10 @@ RUN chmod +x /usr/local/sbin/entrypoint.sh
 # Set working directory.
 WORKDIR ${SIAB_HOME}
 
-# Switch to the created user.
-USER ${SIAB_USER}
+# Run the entrypoint as root so it can configure the container at runtime.
+# The entrypoint itself will drop privileges to `${SIAB_USER}` before
+# executing the final command.
+USER root
 
 # Set the entrypoint and default command.
 ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]

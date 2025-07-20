@@ -2,6 +2,14 @@
 
 set -e  # Exit immediately on error
 
+# Generate or set the password for the container user. A random password is
+# created when `SIAB_PASSWORD` is not supplied and printed for reference.
+if [ -z "$SIAB_PASSWORD" ]; then
+    SIAB_PASSWORD="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
+    echo "Generated password for $SIAB_USER: $SIAB_PASSWORD"
+fi
+echo "$SIAB_USER:$SIAB_PASSWORD" | chpasswd
+
 # Define the default command
 COMMAND="shellinabox"
 
@@ -31,8 +39,8 @@ echo "Starting container..."
 # If no arguments are provided, default to shellinabox
 if [ $# -eq 0 ]; then
     echo "No arguments provided, defaulting to: $COMMAND"
-    exec $COMMAND
+    exec su -s /bin/bash "$SIAB_USER" -c "$COMMAND"
 else
     echo "Executing provided command: $@"
-    exec "$@"
+    exec su -s /bin/bash "$SIAB_USER" -c "$*"
 fi

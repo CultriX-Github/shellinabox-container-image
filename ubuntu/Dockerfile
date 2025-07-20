@@ -61,8 +61,9 @@ RUN chmod +x /usr/local/sbin/entrypoint.sh
 # Set working directory.
 WORKDIR ${SIAB_HOME}
 
-# Switch to the created user.
-USER ${SIAB_USER}
+# Run the entrypoint as root so it can set the user's password, then it will
+# start Shell in a Box under `${SIAB_USER}`.
+USER root
 
 # Set the entrypoint and default command.
 ENTRYPOINT ["/usr/local/sbin/entrypoint.sh"]
